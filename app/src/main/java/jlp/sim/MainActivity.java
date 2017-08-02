@@ -78,7 +78,7 @@ public class MainActivity extends AppCompatActivity {
     PlayersAdapter playersAdapter;
 
     EditText mensajetxt, buscajugador;
-    TextView nombreJugador, fuerzaTV, inteligenciaTV, magiaTV;
+    TextView nombreJugador, fuerzaTV, inteligenciaTV, magiaTV, victoriasTV, derrotasTV;
     RadioGroup radioGroup;
     ImageView imagenJugador;
 
@@ -96,7 +96,8 @@ public class MainActivity extends AppCompatActivity {
     FirebaseStorage storage;
 
 
-    int filtrar = 1;
+    int filtrar = 3;
+    String ultimoReto = "";
     private FirebaseAuth auth;
     private FirebaseAnalytics mFirebaseAnalytics;
     final int MAX_JUGADORES = 100;
@@ -123,6 +124,8 @@ public class MainActivity extends AppCompatActivity {
         radioGroup = (RadioGroup) findViewById(R.id.grupoBTN);
         buscajugador = (EditText) findViewById(R.id.busca_jugadorET);
         imagenJugador = (ImageView) findViewById(R.id.logoJugador);
+        victoriasTV = (TextView) findViewById(R.id.victoriasTV);
+        derrotasTV = (TextView) findViewById(R.id.derrotasTV);
 
         // Recycler View Para la lista de jugadores
         rv = (RecyclerView) findViewById(R.id.recycler_players);
@@ -241,10 +244,10 @@ public class MainActivity extends AppCompatActivity {
                 // Si queremos ver los mejores
                 if (filtrar == 1) {
                     Collections.sort(players, new ComparadorTop());
+                } else {
+                    // ordenar lista por el campo "Actualizado"
+                    Collections.sort(players);
                 }
-
-                // ordenar lista por el campo "Actualizado"
-                Collections.sort(players);
 
                 // si hay mas de 100 registros eliminar hasta que haya 100
                 while (players.size()>100){
@@ -272,10 +275,16 @@ public class MainActivity extends AppCompatActivity {
                 jugadorActivo = dataSnapshot2.getValue(Jugador.class);
 
                 if (jugadorActivo != null) {
-                    nombreJugador.setText(jugadorActivo.getNombre());
+
+                    //Actualizar el View
                     fuerzaTV.setText(jugadorActivo.getFuerza() + "");
                     inteligenciaTV.setText(jugadorActivo.getInteligencia() + "");
                     magiaTV.setText(jugadorActivo.getMagia() + "");
+                    victoriasTV.setText("Victorias : " + jugadorActivo.getVictorias());
+                    derrotasTV.setText("Derrotas : " + jugadorActivo.getDerrotas());
+
+                    nombreJugador.setText(jugadorActivo.getNombre());
+
                     descargarImagen();
 
                     jugadorActivo.setConectado(true);
@@ -313,7 +322,7 @@ public class MainActivity extends AppCompatActivity {
                 // Si tocamos a un jugador que no está conectado le mandamos una notificación
                 if (!rival.isConectado()) {
                     Toast.makeText(context, "El Rival tiene que estar conectado, mandado mensaje para que se conecte...", Toast.LENGTH_LONG).show();
-                    rival.setNotificacion("Te ha retado " + jugadorActivo.getNombre() +"\n¡¡¡ Conéctate a S.I.M para aceptar el Reto !!!");
+                    rival.setNotificacion("Te ha retado " + jugadorActivo.getNombre() +"\n ¡¡¡ Conéctate a S.I.M para aceptar el Reto !!!");
                     rivalRef.setValue(rival);
                 }
 
@@ -388,8 +397,22 @@ public class MainActivity extends AppCompatActivity {
     @Override
     protected void onStart() {
         super.onStart();
+
+        if (auth.getCurrentUser() == null) {
+            Intent i = new Intent(this, LoginActivity.class);
+            startActivity(i);
+        }
+
         descargarImagen();
         if (jugadorActivo != null) {
+            // terminamos de dejar preparado el jugador para otro reto y actualizamos la base de datos
+            jugadorActivo.setUltimoReto(ultimoReto);
+            jugadorActivo.setRetadorId("*");
+            jugadorActivo.setRivalId("*");
+            jugadorActivo.setResultadoreto(0);
+            jugadorActivo.setResultadorival(0);
+            jugadorActivo.setJugando(false);
+
             jugadorActivo.setConectado(true);
             userRef.setValue(jugadorActivo);
         }
@@ -414,6 +437,16 @@ public class MainActivity extends AppCompatActivity {
 
                 Intent i = new Intent(this, LoginActivity.class);
                 startActivity(i);
+                return true;
+
+            case R.id.desbloquear_btn:
+                // terminamos de dejar preparado el jugador para otro reto y actualizamos la base de datos
+                jugadorActivo.setRetadorId("*");
+                jugadorActivo.setRivalId("*");
+                jugadorActivo.setResultadoreto(0);
+                jugadorActivo.setResultadorival(0);
+                jugadorActivo.setJugando(false);
+                userRef.setValue(jugadorActivo);
                 return true;
 
             default:
@@ -494,6 +527,12 @@ public class MainActivity extends AppCompatActivity {
         inteligenciarivaltxt.setText(rivaldlg.getInteligencia() + "");
         magiarivaltxt.setText(rivaldlg.getMagia() + "");
 
+        Glide.with(context)
+                .using(new FirebaseImageLoader())
+                .load(storageRef.child(rival.getId()))
+                .diskCacheStrategy(DiskCacheStrategy.NONE)
+                .into(imagenrivalIV);
+
 
         // Añadir como amigo
         amigoBTN.setOnClickListener(new View.OnClickListener() {
@@ -547,8 +586,6 @@ public class MainActivity extends AppCompatActivity {
 
         Log.d("FINRETO", "" + jugadorActivo.getResultadoreto() + " - " + jugadorActivo.getResultadorival());
 
-
-
         final Dialog dialog_finreto = new Dialog(context);
         dialog_finreto.setContentView(R.layout.dialogo_resultado);
         dialog_finreto.setTitle("S I M");
@@ -563,13 +600,13 @@ public class MainActivity extends AppCompatActivity {
 
         final ImageButton resultado_OK_BTN = (ImageButton) dialog_finreto.findViewById(R.id.resultado_OK_BTN);
 
-
-
         if (jugadorActivo.getResultadoreto() < jugadorActivo.getResultadorival()) {
-            nombre_jugador_resultado_TV.setText(jugadorActivo.getNombre() + " Has Perdido");
+            nombre_jugador_resultado_TV.setText(jugadorActivo.getNombre() + " Has Perdido usando " + ultimoReto);
+            jugadorActivo.setDerrotas(jugadorActivo.getVictorias() + 1);
             jugadorActivo.setResultadoreto(-1);
         } else if (jugadorActivo.getResultadoreto() > jugadorActivo.getResultadorival()) {
-            nombre_jugador_resultado_TV.setText(jugadorActivo.getNombre() + " Has Ganado");
+            nombre_jugador_resultado_TV.setText(jugadorActivo.getNombre() + " Has Ganado usando " + ultimoReto);
+            jugadorActivo.setVictorias(jugadorActivo.getVictorias() + 1);
             jugadorActivo.setResultadoreto(1);
         } else {
             nombre_jugador_resultado_TV.setText(jugadorActivo.getNombre() + " Empate");
@@ -577,10 +614,11 @@ public class MainActivity extends AppCompatActivity {
         }
 
         // Actualizar las puntuaciones
-        switch (jugadorActivo.getUltimoReto()) {
+        switch (ultimoReto) {
             case "Fuerza":
                 jugadorActivo.setFuerza(jugadorActivo.getFuerza() + jugadorActivo.getResultadoreto());
                 break;
+
             case "Inteligencia":
                 jugadorActivo.setInteligencia(jugadorActivo.getInteligencia() + jugadorActivo.getResultadoreto());
                 break;
@@ -605,9 +643,28 @@ public class MainActivity extends AppCompatActivity {
 
         // mostrar el resultado en el diálogo
         puntos_jugador_resultado_TV.setText(jugadorActivo.getResultadoreto() + "");
-
         nombre_rival_resultado_TV.setText(rival.getNombre());
         puntos_rival_resultado_TV.setText(jugadorActivo.getResultadorival() + "");
+
+        Glide.with(context)
+                .using(new FirebaseImageLoader())
+                .load(storageRef.child(jugadorActivo.getId()))
+                .diskCacheStrategy(DiskCacheStrategy.NONE)
+                .into(imagen_jugador_IV);
+
+        Glide.with(context)
+                .using(new FirebaseImageLoader())
+                .load(storageRef.child(rival.getId()))
+                .diskCacheStrategy(DiskCacheStrategy.NONE)
+                .into(imagen_rival_IV);
+
+
+        //Actualizar el View
+        fuerzaTV.setText(jugadorActivo.getFuerza() + "");
+        inteligenciaTV.setText(jugadorActivo.getInteligencia() + "");
+        magiaTV.setText(jugadorActivo.getMagia() + "");
+        victoriasTV.setText("Victorias : " + jugadorActivo.getVictorias());
+        derrotasTV.setText("Derrotas : " + jugadorActivo.getDerrotas());
 
 
         resultado_OK_BTN.setOnClickListener(new View.OnClickListener() {
@@ -615,6 +672,7 @@ public class MainActivity extends AppCompatActivity {
             public void onClick(View view) {
 
                 // terminamos de dejar preparado el jugador para otro reto y actualizamos la base de datos
+                jugadorActivo.setUltimoReto(ultimoReto);
                 jugadorActivo.setRetadorId("*");
                 jugadorActivo.setRivalId("*");
                 jugadorActivo.setResultadoreto(0);
@@ -755,9 +813,12 @@ public class MainActivity extends AppCompatActivity {
         // supone que los 2 jugadores han terminado su reto (Se detecta en el listener de la base de datos)
 
             if (requestCode == 1 || requestCode == 2 || requestCode == 3) {
+                Toast.makeText(context, "Fin. Cuando el rival termine, aparecerá el resultado ...", Toast.LENGTH_LONG).show();
                 if (resultCode == Activity.RESULT_OK) {
                     long puntos = data.getLongExtra("Resultado", -1);
                     String tipo = data.getStringExtra("Juego");
+
+                    ultimoReto = tipo;
 
                     jugadorActivo.setUltimoReto(tipo);
                     jugadorActivo.setResultadoreto((int) puntos);
@@ -791,7 +852,10 @@ public class MainActivity extends AppCompatActivity {
                 }
 
 
+                fuerzaTV.setText(jugadorActivo.getFuerza() + "");
                 inteligenciaTV.setText(jugadorActivo.getInteligencia() + "");
+                magiaTV.setText(jugadorActivo.getMagia() + "");
+
             }
 
 

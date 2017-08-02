@@ -12,7 +12,6 @@ import android.util.Log;
 import android.view.MotionEvent;
 import android.view.SurfaceHolder;
 import android.view.SurfaceView;
-import android.widget.Toast;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -359,7 +358,7 @@ public class PuzzleView extends SurfaceView {
         int cnd = 0;
 
         for (PuzzleSprite tmp : puzzleSprites) {
-            Log.d("RESUELTO", "" + tmp.getX() + " - " + tmp.getY() + " / " + x + " - " + y);
+          //  Log.d("RESUELTO", "" + tmp.getX() + " - " + tmp.getY() + " / " + x + " - " + y);
             if (tmp.getX() == x && tmp.getY() == y) cnd++;
             x++;
             if (x % ancho == 0) {
@@ -368,10 +367,10 @@ public class PuzzleView extends SurfaceView {
             }
         }
 
-        Log.d("RESUELTO", "" + cnd + " - " + ancho * alto);
+     //   Log.d("RESUELTO", "" + cnd + " - " + ancho * alto);
 
         if (cnd == ancho * alto) {
-            Toast.makeText(contexto, "RESUELTO ", Toast.LENGTH_SHORT).show();
+
             for (PuzzleSprite tmp : puzzleSprites) {
                 if (tmp.isVisible() == false) tmp.setVisible(true);
             }
@@ -390,7 +389,7 @@ public class PuzzleView extends SurfaceView {
         puzzleLoopThread.setRunning(false);
         puzzleLoopThread.interrupt();
 
-        long resultado = crono - System.currentTimeMillis() ;
+        long resultado = 60000 - (crono - System.currentTimeMillis());
 
         Intent returnIntent = new Intent();
         returnIntent.putExtra("Resultado", resultado);

@@ -12,6 +12,7 @@ import android.util.Log;
 import android.view.MotionEvent;
 import android.view.SurfaceHolder;
 import android.view.SurfaceView;
+import android.widget.Toast;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -26,6 +27,8 @@ public class FuerzaView extends SurfaceView {
 
     private FuerzaLoopThread fuerzaLoopThread;
     private List<FuerzaSprite> fuerzaSprites = new ArrayList<>();
+    private FuerzaSprite[] brazo;
+    private int animacionbrazo = 0;
     private long lastClick;
     private long lastTouch;
     private Bitmap foto;
@@ -41,6 +44,7 @@ public class FuerzaView extends SurfaceView {
     public FuerzaView(Context context) {
         super(context);
         this.contexto = context;
+        this.brazo = new FuerzaSprite[4];
 
         fuerzaLoopThread = new FuerzaLoopThread(this);
         getHolder().addCallback(new SurfaceHolder.Callback() {
@@ -49,10 +53,12 @@ public class FuerzaView extends SurfaceView {
             public void surfaceDestroyed(SurfaceHolder holder) {
                 boolean retry = true;
                 fuerzaLoopThread.setRunning(false);
+
                 while (retry) {
                     try {
                         fuerzaLoopThread.join();
                         retry = false;
+
                         parar();
                     } catch (InterruptedException e) {
 
@@ -72,6 +78,8 @@ public class FuerzaView extends SurfaceView {
             public void surfaceChanged(SurfaceHolder holder, int format,
                                        int width, int height) {
             }
+
+
         });
     }
 
@@ -81,11 +89,11 @@ public class FuerzaView extends SurfaceView {
         fuerzaSprites.add(createSprite(R.drawable.botonrojo, 1));
         fuerzaSprites.add(createSprite(R.drawable.botonverde, 2));
         fuerzaSprites.add(createSprite(R.drawable.warrior2, 3));
-        fuerzaSprites.add(createSprite(R.drawable.arm, 4));
-        fuerzaSprites.add(createSprite(R.drawable.arm2, 5));
-        fuerzaSprites.add(createSprite(R.drawable.arm3, 6));
-        fuerzaSprites.add(createSprite(R.drawable.arm4, 7));
 
+        brazo[0] = createSprite(R.drawable.arm, 4);
+        brazo[1] = createSprite(R.drawable.arm2, 5);
+        brazo[2] = createSprite(R.drawable.arm3, 6);
+        brazo[3] = createSprite(R.drawable.arm4, 7);
 
     }
 
@@ -138,7 +146,7 @@ public class FuerzaView extends SurfaceView {
 
         pintarFuerza.setStyle(Paint.Style.STROKE);
         pintarFuerza.setStrokeWidth(5);
-        canvas.drawRect(anchoscr / 12, altoscr / 12, anchoscr - (anchoscr / 12), (altoscr / 6), pintarFuerza);
+        canvas.drawRect(anchoscr / 12, altoscr / 12, anchoscr - (anchoscr / 12) + 5, (altoscr / 6), pintarFuerza);
 
         pintarFuerza.setStyle(Paint.Style.FILL_AND_STROKE);
         pintarFuerza.setColor(Color.BLUE);
@@ -155,19 +163,12 @@ public class FuerzaView extends SurfaceView {
         // Guerrero
         fuerzaSprites.get(3).onDraw(canvas);
 
-        if (fuerza > 0 && fuerza < 25){
-            fuerzaSprites.get(4).onDraw(canvas);
-        }
-        if (fuerza > 24 && fuerza < 50){
-            fuerzaSprites.get(5).onDraw(canvas);
-        }
-        if (fuerza > 49 && fuerza < 75){
-            fuerzaSprites.get(6).onDraw(canvas);
-        }
-        if (fuerza > 74 && fuerza < 100){
-            fuerzaSprites.get(7).onDraw(canvas);
+        if (fuerza % 5 == 0){
+            animacionbrazo++;
+            if (animacionbrazo==4) animacionbrazo=0;
         }
 
+        brazo[animacionbrazo].onDraw(canvas);
 
 
         // Log.d("TIEMPO", System.currentTimeMillis() - crono +  "");
@@ -198,10 +199,10 @@ public class FuerzaView extends SurfaceView {
                             if (System.currentTimeMillis() - lastTouch < 100){
                                 fuerza++;
                             }
-                            if (System.currentTimeMillis() - lastTouch < 50){
+                            if (System.currentTimeMillis() - lastTouch < 30){
                                 fuerza++;
                             }
-                            if (System.currentTimeMillis() - lastTouch < 20){
+                            if (System.currentTimeMillis() - lastTouch < 15){
                                 fuerza++;
                             }
 
@@ -234,10 +235,8 @@ public class FuerzaView extends SurfaceView {
         fuerzaLoopThread.setRunning(false);
         fuerzaLoopThread.interrupt();
 
-
-        int puntos = 1;
         // aquí calcular los puntos del juego
-
+        long puntos = ((fuerza/2) * 800) + 1;
 
         Intent returnIntent = new Intent();
         returnIntent.putExtra("Resultado", puntos);

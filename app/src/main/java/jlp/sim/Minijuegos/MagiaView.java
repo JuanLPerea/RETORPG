@@ -34,13 +34,14 @@ public class MagiaView extends SurfaceView {
     private MagiaSprite caldero[];
     private long lastClick;
     long crono = 15000;
-    boolean resuelto = false;
+    boolean tocado = false;
     int spriteactivo;
     int poderhechizo = 0;
     Activity miActividad;
     int animacion = 0;
     int veloanim = 0;
     int num_objetos = 8;
+    String pocion = "";
 
 
     public MagiaView(Context context) {
@@ -54,6 +55,7 @@ public class MagiaView extends SurfaceView {
             public void surfaceDestroyed(SurfaceHolder holder) {
                 boolean retry = true;
                 magiaLoopThread.setRunning(false);
+
                 while (retry) {
                     try {
                         magiaLoopThread.join();
@@ -88,58 +90,72 @@ public class MagiaView extends SurfaceView {
         caldero[1] = createSprite(R.drawable.caldero2, 0, 0);
         caldero[2] = createSprite(R.drawable.caldero3, 0, 0);
         caldero[3] = createSprite(R.drawable.caldero4, 0, 0);
-        for (int cnd = 0 ; cnd <4 ; cnd++ ){
+        for (int cnd = 0; cnd < 4; cnd++) {
             caldero[cnd].centrar();
             caldero[cnd].setMovible(false);
         }
         // preparar el fondo
-        fondo = createSprite(R.drawable.fondomagia,0,-1);
+        fondo = createSprite(R.drawable.fondomagia, 0, -1);
         fondo.setMovible(false);
         fondo.setX(0);
         fondo.setY(0);
 
         Random rnd = new Random();
 
+        List<Integer> objetos = new ArrayList<>();
+        List<Integer> objetos_desordenados = new ArrayList<>();
+
+        for (int numobj = 0 ; numobj < num_objetos ; numobj++){
+            objetos.add(numobj);
+        }
+        for (int numobj = 0 ; numobj < num_objetos ; numobj++){
+            int numero_azar = rnd.nextInt(objetos.size());
+            objetos_desordenados.add(objetos.get(numero_azar));
+            objetos.remove(numero_azar);
+        }
+
+
         for (int nmr = 0; nmr < 8; nmr++) {
-            switch (rnd.nextInt(num_objetos)) {
+            switch (objetos_desordenados.get(nmr)) {
                 case 0:
-                    magiaSprites.add(createSprite(R.drawable.hacha, 2, nmr));
+                    magiaSprites.add(createSprite(R.drawable.hacha, 4, nmr));
                     break;
                 case 1:
                     magiaSprites.add(createSprite(R.drawable.azucar, -1, nmr));
                     break;
                 case 2:
-                    magiaSprites.add(createSprite(R.drawable.hueso, 3, nmr));
+                    magiaSprites.add(createSprite(R.drawable.hueso, 6, nmr));
                     break;
                 case 3:
                     magiaSprites.add(createSprite(R.drawable.huevo, -2, nmr));
                     break;
                 case 4:
-                    magiaSprites.add(createSprite(R.drawable.lagartija, 4, nmr));
+                    magiaSprites.add(createSprite(R.drawable.lagartija, 7, nmr));
                     break;
                 case 5:
-                    magiaSprites.add(createSprite(R.drawable.ojos, 5, nmr));
+                    magiaSprites.add(createSprite(R.drawable.ojos, 8, nmr));
                     break;
                 case 6:
-                    magiaSprites.add(createSprite(R.drawable.pelo, 4, nmr));
+                    magiaSprites.add(createSprite(R.drawable.pelo, 8, nmr));
                     break;
                 case 7:
                     magiaSprites.add(createSprite(R.drawable.rosa, -4, nmr));
                     break;
                 case 8:
-                    magiaSprites.add(createSprite(R.drawable.serpiente, 6, nmr));
+                    magiaSprites.add(createSprite(R.drawable.serpiente, 10, nmr));
                     break;
                 case 9:
-                    magiaSprites.add(createSprite(R.drawable.spider, 3, nmr));
+                    magiaSprites.add(createSprite(R.drawable.spider, 6, nmr));
                     break;
                 case 10:
                     magiaSprites.add(createSprite(R.drawable.tomate, -3, nmr));
                     break;
                 case 11:
-                    magiaSprites.add(createSprite(R.drawable.veneno, 7, nmr));
+                    magiaSprites.add(createSprite(R.drawable.veneno, 11, nmr));
                     break;
             }
         }
+        magiaSprites.add(createSprite(R.drawable.puzzle, 0, 99));
     }
 
 
@@ -154,27 +170,6 @@ public class MagiaView extends SurfaceView {
 
         fondo.onDraw(canvas);
 
-        // pintar el cronometro
-        Paint pintar = new Paint();
-        pintar.setColor(Color.WHITE);
-        pintar.setTextSize(82);
-        pintar.setAntiAlias(true);
-        pintar.setTextAlign(Paint.Align.CENTER);
-
-
-        long segundos = (crono - System.currentTimeMillis()) / 1000;
-
-
-        if (segundos <= 0) {
-            finjuego();
-        }
-
-
-        long decimas = (crono - System.currentTimeMillis()) % 1000;
-        String decimastxt = decimas + "  ";
-
-        canvas.drawText(segundos + ":" + decimastxt.charAt(0), canvas.getWidth() / 2, canvas.getHeight() - pintar.getTextSize() - 10, pintar);
-
         // animación del caldero
         if (veloanim % 5 == 0) {
             animacion++;
@@ -188,25 +183,31 @@ public class MagiaView extends SurfaceView {
             magiaSprites.get(cnd).onDraw(canvas);
         }
 
+        // pintar el cronometro
+        Paint pintar = new Paint();
+        pintar.setColor(Color.WHITE);
+        pintar.setTextSize(82);
+        pintar.setAntiAlias(true);
+        pintar.setTextAlign(Paint.Align.CENTER);
+
+
+        long segundos = (crono - System.currentTimeMillis()) / 1000;
+
+
+        if (segundos <= 0) {
+
+            finjuego();
+        }
+
+
+        long decimas = (crono - System.currentTimeMillis()) % 1000;
+        String decimastxt = decimas + "  ";
+
+        canvas.drawText(segundos + ":" + decimastxt.charAt(0), canvas.getWidth() / 2, canvas.getHeight() - pintar.getTextSize() - 10, pintar);
+
+
     }
 
-    private void finjuego() {
-
-        magiaLoopThread.setRunning(false);
-        magiaLoopThread.interrupt();
-
-
-        int puntos = 1;
-        // aquí calcular los puntos de la magia
-
-
-        Intent returnIntent = new Intent();
-        returnIntent.putExtra("Resultado", puntos);
-        returnIntent.putExtra("Juego", "Magia");
-        miActividad.setResult(Activity.RESULT_OK,returnIntent);
-        miActividad.finish();
-
-    }
 
 
     @Override
@@ -219,23 +220,24 @@ public class MagiaView extends SurfaceView {
             float y = event.getY();
             synchronized (getHolder()) {
 
-                MagiaSprite magiaSprite=null;
+                MagiaSprite magiaSprite = null;
 
-                switch (action){
+                switch (action) {
                     case (MotionEvent.ACTION_DOWN):
                         for (int i = magiaSprites.size() - 1; i >= 0; i--) {
                             magiaSprite = magiaSprites.get(i);
                             if (magiaSprite.isCollition(x, y)) {
                                 Log.d("EVENTO", "DOWN " + i);
                                 spriteactivo = i;
+                                tocado = true;
                                 return true;
                             }
                         }
                         return true;
 
                     case (MotionEvent.ACTION_MOVE):
-                        Log.d("EVENTO", "ARRASTRAR " );
-                        if (magiaSprites.get(spriteactivo) != null) {
+                        Log.d("EVENTO", "ARRASTRAR ");
+                        if (magiaSprites.get(spriteactivo) != null && tocado) {
                             int tmpx = (int) event.getX() - (magiaSprites.get(spriteactivo).getWidth() / 2);
                             int tmpy = (int) event.getY() - (magiaSprites.get(spriteactivo).getHeight() / 2);
                             //   Log.d("ARRASTRAR", "" + tmpx + " - " + tmpy);
@@ -243,33 +245,31 @@ public class MagiaView extends SurfaceView {
                             magiaSprites.get(spriteactivo).setX(tmpx);
                             magiaSprites.get(spriteactivo).setY(tmpy);
 
+
+                            // si está dentro de las coordenadas del caldero, esque lo hemos echado dentro
+                            if (magiaSprites.get(spriteactivo).getY() > this.getHeight() / 2) {
+                                poderhechizo += magiaSprites.get(spriteactivo).getValor();
+                                pocion = pocion + magiaSprites.get(spriteactivo).getValor();
+                                magiaSprites.remove(spriteactivo);
+                                tocado = false;
+                            }
+
                         }
                         return true;
 
                     case (MotionEvent.ACTION_UP):
+                        Log.d("EVENTO", "DENTRO ");
+                        return false;
 
-                        Log.d("EVENTO", "DENTRO " );
-
-                        if (magiaSprites.get(spriteactivo) != null) {
-                            // si está dentro de las coordenadas del caldero, esque lo hemos echado dentro
-
-                            if (magiaSprites.get(spriteactivo).getY() > this.getHeight() / 3) {
-                                poderhechizo += magiaSprites.get(spriteactivo).getValor();
-
-                                magiaSprites.remove(spriteactivo);
-                            }
-                        }
-
-                        return true;
                     case (MotionEvent.ACTION_CANCEL):
                         Log.d("EVENTO", "CANCEL " + action);
-                        return true;
+                        return false;
                     case (MotionEvent.ACTION_OUTSIDE):
                         Log.d("EVENTO", "FUERA " + action);
-                        return true;
+                        return false;
                     default:
                         Log.d("EVENTO", "OTRO " + action);
-                        return true;
+                        return false;
 
                 }
             }
@@ -285,7 +285,24 @@ public class MagiaView extends SurfaceView {
 
     public void setMiActividad(Activity actividad) {
         this.miActividad = actividad;
+    }
+
+    private void finjuego() {
+
+
+        magiaLoopThread.setRunning(false);
+        magiaLoopThread.interrupt();
+
+        // aquí calcular los puntos de la magia
+        long puntos = (poderhechizo * 1000) + 1;
+
+        Intent returnIntent = new Intent();
+        returnIntent.putExtra("Resultado", puntos);
+        returnIntent.putExtra("Juego", "Magia");
+        miActividad.setResult(Activity.RESULT_OK, returnIntent);
+        miActividad.finish();
 
     }
+
 }
 

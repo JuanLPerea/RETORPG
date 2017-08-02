@@ -80,6 +80,8 @@ public class PlayersAdapter extends RecyclerView.Adapter<PlayersAdapter.Jugadore
         holder.inteligencia.setText(jugador.getInteligencia() + "");
         holder.magia.setText(jugador.getMagia() + "");
         holder.mensaje.setText(jugador.getMensajes().get(jugador.getMensajes().size()-1));
+        holder.victoriasTV.setText("Victorias : " + jugador.getVictorias());
+        holder.derrotasTV.setText("Derrotas: " + jugador.getDerrotas());
 
         Glide.with(mContext)
                 .using(new FirebaseImageLoader())
@@ -118,7 +120,7 @@ public class PlayersAdapter extends RecyclerView.Adapter<PlayersAdapter.Jugadore
     public static class JugadoresViewHolder extends RecyclerView.ViewHolder{
 
         ImageView imagen, online, jugando;
-        TextView nombrejugador, fuerza, inteligencia, magia, mensaje;
+        TextView nombrejugador, fuerza, inteligencia, magia, mensaje, victoriasTV, derrotasTV;
 
 
 
@@ -132,6 +134,8 @@ public class PlayersAdapter extends RecyclerView.Adapter<PlayersAdapter.Jugadore
             magia = (TextView)itemView.findViewById(R.id.magiatxt);
             mensaje = (TextView)itemView.findViewById(R.id.mensajetxt);
             jugando = (ImageView)itemView.findViewById(R.id.jugandoIV);
+            victoriasTV = (TextView)itemView.findViewById(R.id.listavictoriasTV);
+            derrotasTV = (TextView)itemView.findViewById(R.id.listaderrotasTV);
 
         }
     }

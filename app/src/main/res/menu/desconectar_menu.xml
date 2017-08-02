@@ -3,6 +3,11 @@
     xmlns:android="http://schemas.android.com/apk/res/android">
 
     <item
+        android:id="@+id/desbloquear_btn"
+        android:title="Desbloquear Retos" />
+
+    <item
         android:id="@+id/desconectar_btn"
         android:title="Desconectar" />
+
 </menu>
