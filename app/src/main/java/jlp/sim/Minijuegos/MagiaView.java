@@ -116,7 +116,11 @@ public class MagiaView extends SurfaceView {
 
 
         for (int nmr = 0; nmr < 8; nmr++) {
-            switch (objetos_desordenados.get(nmr)) {
+
+            int seleccion = rnd.nextInt(objetos_desordenados.size());
+
+
+            switch (objetos_desordenados.get(seleccion)) {
                 case 0:
                     magiaSprites.add(createSprite(R.drawable.hacha, 4, nmr));
                     break;
@@ -154,6 +158,7 @@ public class MagiaView extends SurfaceView {
                     magiaSprites.add(createSprite(R.drawable.veneno, 11, nmr));
                     break;
             }
+            objetos_desordenados.remove(seleccion);
         }
         magiaSprites.add(createSprite(R.drawable.puzzle, 0, 99));
     }

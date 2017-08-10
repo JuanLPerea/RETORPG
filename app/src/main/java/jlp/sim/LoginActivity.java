@@ -2,19 +2,27 @@ package jlp.sim;
 
 import android.content.Context;
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
+import android.graphics.drawable.AnimationDrawable;
+import android.net.Uri;
 import android.os.Build;
 import android.support.annotation.NonNull;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.View;
+import android.view.Window;
 import android.widget.Button;
 import android.widget.EditText;
+import android.widget.ImageView;
 import android.widget.Toast;
+import android.widget.VideoView;
 
+import com.google.android.gms.ads.AdRequest;
+import com.google.android.gms.ads.AdView;
 import com.google.android.gms.tasks.OnCompleteListener;
 import com.google.android.gms.tasks.OnFailureListener;
 import com.google.android.gms.tasks.OnSuccessListener;
@@ -28,6 +36,8 @@ import com.google.firebase.database.FirebaseDatabase;
 import com.google.firebase.storage.FirebaseStorage;
 import com.google.firebase.storage.StorageReference;
 import com.google.firebase.storage.UploadTask;
+
+import com.google.android.gms.ads.MobileAds;
 
 import java.io.ByteArrayOutputStream;
 import java.util.HashMap;
@@ -53,17 +63,56 @@ public class LoginActivity extends AppCompatActivity {
     StorageReference storageRef;
     FirebaseStorage storage;
 
+    //Ads
+    private AdView mAdView;
+
+    // Video
+    ImageView animacionFondo;
+
+    // Shared preferences
+    SharedPreferences prefs;
+    String email;
+    String password;
+    String apodo;
+
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_login);
 
+        // Ad Mob
+        MobileAds.initialize(this, "ca-app-pub-4821530383095033/5883489875");
+
         buttonRegister = (Button) findViewById(R.id.registbtn);
         buttonSignIn = (Button) findViewById(R.id.loginbtn);
         editTextEmail = (EditText) findViewById(R.id.usuario);
         editTextPass = (EditText) findViewById(R.id.password);
         editTextApodo = (EditText) findViewById(R.id.apodo);
+
+        prefs = getSharedPreferences("MisPreferencias",Context.MODE_PRIVATE);
+        email = prefs.getString("email", "");
+        password = prefs.getString("pass", "");
+        apodo = prefs.getString("apodo", "");
+
+        editTextEmail.setText(email);
+        editTextPass.setText(password);
+        editTextApodo.setText(apodo);
+
+        animacionFondo = (ImageView) findViewById(R.id.animacion_fondo);
+        animacionFondo.setBackgroundResource(R.drawable.animacion);
+        // Get the background, which has been compiled to an AnimationDrawable object.
+        AnimationDrawable frameAnimation = (AnimationDrawable) animacionFondo.getBackground();
+
+        // Start the animation (looped playback by default).
+        frameAnimation.start();
+
+
+
+        mAdView = (AdView) findViewById(R.id.adViewInicial);
+        AdRequest adRequest = new AdRequest.Builder().build();
+        mAdView.loadAd(adRequest);
+
 
         database = FirebaseDatabase.getInstance();
 
@@ -86,8 +135,8 @@ public class LoginActivity extends AppCompatActivity {
                 user = firebaseAuth.getCurrentUser();
                 if (user != null){
                     Log.i("SESION" , "sesion iniciada con mail " + user.getEmail() );
-                    Toast.makeText(context, "Sesión iniciada con mail: " + user.getEmail(), Toast.LENGTH_LONG).show();
-                    iniciar();
+                  //  Toast.makeText(context, "Sesión iniciada con mail: " + user.getEmail(), Toast.LENGTH_LONG).show();
+                  //  iniciar();
                 }
                 else {
                     Log.i("SESION" , "Sesion Cerrada");
@@ -171,7 +220,9 @@ public class LoginActivity extends AppCompatActivity {
 
     public void registrar(View v){
         String emailReg = editTextEmail.getText().toString();
+        if(emailReg.equals("")) emailReg = " ";
         String passReg = editTextPass.getText().toString();
+        if(passReg.equals("")) passReg = " ";
         registrar(emailReg, passReg);
     }
 
@@ -193,8 +244,17 @@ public class LoginActivity extends AppCompatActivity {
     }
 
     public void iniciar(){
+
+
+        SharedPreferences.Editor editor = prefs.edit();
+        editor.putString("email", editTextEmail.getText() + "");
+        editor.putString("pass", editTextPass.getText() + "");
+        editor.putString("apodo", editTextApodo.getText() + "");
+        editor.commit();
+
         Intent i = new Intent(this, MainActivity.class );
         startActivity(i);
+       // finish();
     }
 
     public void resetpassword(View v){

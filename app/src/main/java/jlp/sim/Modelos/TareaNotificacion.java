@@ -51,9 +51,11 @@ public class TareaNotificacion extends AsyncTask<Void, Integer, Void> {
         // aqui obtenemos la referencia a Firebase
         database = FirebaseDatabase.getInstance();
         user = FirebaseAuth.getInstance().getCurrentUser();
-        userRef = database.getReference().child(user.getUid());
 
-        Log.d("TAREANOTI", "Usuario " + user.getUid());
+
+            userRef = database.getReference().child(user.getUid());
+
+            Log.d("TAREANOTI", "Usuario " + user.getUid());
 
 
     }

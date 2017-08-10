@@ -1,6 +1,7 @@
 package jlp.sim.Adapters;
 
 import android.content.Context;
+import android.graphics.Bitmap;
 import android.media.Image;
 import android.provider.ContactsContract;
 import android.support.v7.widget.RecyclerView;
@@ -20,6 +21,7 @@ import com.google.firebase.database.FirebaseDatabase;
 import com.google.firebase.storage.FirebaseStorage;
 import com.google.firebase.storage.StorageReference;
 
+import java.nio.ByteBuffer;
 import java.util.List;
 
 import jlp.sim.Modelos.Jugador;
@@ -80,8 +82,9 @@ public class PlayersAdapter extends RecyclerView.Adapter<PlayersAdapter.Jugadore
         holder.inteligencia.setText(jugador.getInteligencia() + "");
         holder.magia.setText(jugador.getMagia() + "");
         holder.mensaje.setText(jugador.getMensajes().get(jugador.getMensajes().size()-1));
-        holder.victoriasTV.setText("Victorias : " + jugador.getVictorias());
-        holder.derrotasTV.setText("Derrotas: " + jugador.getDerrotas());
+        holder.victoriasTV.setText(jugador.getVictorias() + "");
+        holder.derrotasTV.setText(jugador.getDerrotas() + "");
+
 
         Glide.with(mContext)
                 .using(new FirebaseImageLoader())

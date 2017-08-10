@@ -236,7 +236,7 @@ public class FuerzaView extends SurfaceView {
         fuerzaLoopThread.interrupt();
 
         // aquí calcular los puntos del juego
-        long puntos = ((fuerza/2) * 800) + 1;
+        long puntos = ((fuerza/2) * 700) + 1;
 
         Intent returnIntent = new Intent();
         returnIntent.putExtra("Resultado", puntos);

@@ -1,3 +1,26 @@
 <resources>
-    <string name="app_name">SIM</string>
+    <string name="app_name">Reto RPG</string>
+    <string name="lema">Fuerza * Inteligencia * Magia</string>
+    <string name="iguales">Iguales</string>
+    <string name="top">Top</string>
+    <string name="amigos">Amigos</string>
+    <string name="online">Online</string>
+    <string name="buscar">Buscar Jugador</string>
+    <string name="mensajes">Mensajes</string>
+    <string name="victorias">Victorias:  </string>
+    <string name="derrotas">Derrotas: </string>
+    <string name="mensaje">El Rival tiene que estar conectado, mandado mensaje para que se conecte...</string>
+    <string name="retado">Te ha retado </string>
+    <string name="conectate">¡¡¡ Conéctate a S.I.M !!!</string>
+    <string name="yaretado">¡¡ El jugador está luchando !!</string>
+    <string name="amigo">Jugador añadido como Amigo</string>
+    <string name="ganado">Has ganado usando </string>
+    <string name="perdido">Has perdido usando </string>
+    <string name="empate">Empate</string>
+    <string name="fin">Fin. Cuando el rival termine, aparecerá el resultado ...</string>
+
+    <string name="banner_ad_unit_id">ca-app-pub-4821530383095033/5883489875</string>
+
+
+
 </resources>

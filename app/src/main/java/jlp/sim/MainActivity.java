@@ -4,7 +4,9 @@ import android.*;
 import android.app.Activity;
 import android.app.Dialog;
 import android.content.Context;
+import android.content.DialogInterface;
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
@@ -27,6 +29,7 @@ import android.view.Menu;
 import android.view.MenuInflater;
 import android.view.MenuItem;
 import android.view.View;
+import android.view.Window;
 import android.widget.EditText;
 import android.widget.ImageButton;
 import android.widget.ImageView;
@@ -78,9 +81,10 @@ public class MainActivity extends AppCompatActivity {
     PlayersAdapter playersAdapter;
 
     EditText mensajetxt, buscajugador;
-    TextView nombreJugador, fuerzaTV, inteligenciaTV, magiaTV, victoriasTV, derrotasTV;
+    TextView nombreJugador, fuerzaTV, inteligenciaTV, magiaTV, victoriasTV, derrotasTV, logoTV;
     RadioGroup radioGroup;
     ImageView imagenJugador;
+    ImageButton menuBTN;
 
     FirebaseDatabase database;
     FirebaseUser user;
@@ -94,7 +98,6 @@ public class MainActivity extends AppCompatActivity {
     // Create a storage reference from our app
     StorageReference storageRef;
     FirebaseStorage storage;
-
 
     int filtrar = 3;
     String ultimoReto = "";
@@ -115,6 +118,7 @@ public class MainActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
+
         // Views del Activity
         mensajetxt = (EditText) findViewById(R.id.textomensajeET);
         nombreJugador = (TextView) findViewById(R.id.textJugador);
@@ -126,6 +130,8 @@ public class MainActivity extends AppCompatActivity {
         imagenJugador = (ImageView) findViewById(R.id.logoJugador);
         victoriasTV = (TextView) findViewById(R.id.victoriasTV);
         derrotasTV = (TextView) findViewById(R.id.derrotasTV);
+        logoTV = (TextView) findViewById(R.id.logoTV);
+        menuBTN = (ImageButton) findViewById(R.id.menuBTN);
 
         // Recycler View Para la lista de jugadores
         rv = (RecyclerView) findViewById(R.id.recycler_players);
@@ -142,7 +148,12 @@ public class MainActivity extends AppCompatActivity {
         // Referencias a Firebase
         database = FirebaseDatabase.getInstance();
         user = FirebaseAuth.getInstance().getCurrentUser();
-        userRef = database.getReference().child(user.getUid());
+
+        if (user != null){
+            userRef = database.getReference().child(user.getUid());
+        }
+
+
         jugadoresRef = database.getReference().getRoot();
         storage = FirebaseStorage.getInstance();
         storageRef = storage.getReferenceFromUrl("gs://simgame-41469.appspot.com");
@@ -177,14 +188,16 @@ public class MainActivity extends AppCompatActivity {
                     Jugador jugador = snapshot.getValue(Jugador.class);
 
                     // si alguien te reta o has retado a alguien, detectarlo aqui y recuperar los datos del rival
-                    if (jugadorActivo!=null) {
+                    if (jugadorActivo != null) {
                         if (jugador.getId().equals(jugadorActivo.getRivalId()) && jugadorActivo.isJugando() == false) {
                             rival = jugador;
                             rival.setJugando(true);
+                            rival.setActualizado();
                             rival.setRivalId(jugadorActivo.getId());
 
                             jugadorActivo.setRivalId(rival.getId());
                             jugadorActivo.setJugando(true);
+                            jugadorActivo.setActualizado();
                             userRef.setValue(jugadorActivo);
 
                             // lanzar el diálogo
@@ -240,7 +253,6 @@ public class MainActivity extends AppCompatActivity {
                 }
 
 
-
                 // Si queremos ver los mejores
                 if (filtrar == 1) {
                     Collections.sort(players, new ComparadorTop());
@@ -250,10 +262,9 @@ public class MainActivity extends AppCompatActivity {
                 }
 
                 // si hay mas de 100 registros eliminar hasta que haya 100
-                while (players.size()>100){
-                    players.remove(players.size()-1);
+                while (players.size() > 100) {
+                    players.remove(players.size() - 1);
                 }
-
 
 
                 // Actualizar el Recycler View
@@ -280,8 +291,8 @@ public class MainActivity extends AppCompatActivity {
                     fuerzaTV.setText(jugadorActivo.getFuerza() + "");
                     inteligenciaTV.setText(jugadorActivo.getInteligencia() + "");
                     magiaTV.setText(jugadorActivo.getMagia() + "");
-                    victoriasTV.setText("Victorias : " + jugadorActivo.getVictorias());
-                    derrotasTV.setText("Derrotas : " + jugadorActivo.getDerrotas());
+                    victoriasTV.setText(jugadorActivo.getVictorias() + "");
+                    derrotasTV.setText(jugadorActivo.getDerrotas() + "");
 
                     nombreJugador.setText(jugadorActivo.getNombre());
 
@@ -321,8 +332,8 @@ public class MainActivity extends AppCompatActivity {
 
                 // Si tocamos a un jugador que no está conectado le mandamos una notificación
                 if (!rival.isConectado()) {
-                    Toast.makeText(context, "El Rival tiene que estar conectado, mandado mensaje para que se conecte...", Toast.LENGTH_LONG).show();
-                    rival.setNotificacion("Te ha retado " + jugadorActivo.getNombre() +"\n ¡¡¡ Conéctate a S.I.M para aceptar el Reto !!!");
+                    Toast.makeText(context, R.string.mensaje, Toast.LENGTH_LONG).show();
+                    rival.setNotificacion(R.string.retado + jugadorActivo.getNombre() + R.string.conectate);
                     rivalRef.setValue(rival);
                 }
 
@@ -332,6 +343,7 @@ public class MainActivity extends AppCompatActivity {
                     if (rival.isJugando() == false) {
                         // Actualizar el jugador para que sepa quien es su rival con el campo
                         jugadorActivo.setRivalId(rival.getId());
+                        jugadorActivo.setActualizado();
                         userRef.setValue(jugadorActivo);
 
                         // Actualizar el estado del rival que has retado para que le aparezca una notificación
@@ -341,7 +353,7 @@ public class MainActivity extends AppCompatActivity {
 
                         //retodialog(rival);
                     } else {
-                        Toast.makeText(context, "El jugador ya está retado", Toast.LENGTH_SHORT).show();
+                        Toast.makeText(context, R.string.yaretado, Toast.LENGTH_SHORT).show();
                     }
 
 
@@ -411,48 +423,13 @@ public class MainActivity extends AppCompatActivity {
             jugadorActivo.setRivalId("*");
             jugadorActivo.setResultadoreto(0);
             jugadorActivo.setResultadorival(0);
-            jugadorActivo.setJugando(false);
+//            jugadorActivo.setJugando(false);
 
             jugadorActivo.setConectado(true);
             userRef.setValue(jugadorActivo);
         }
     }
 
-    // Menú para desconectar el usuario
-    @Override
-    public boolean onCreateOptionsMenu(Menu menu) {
-        MenuInflater inflater = getMenuInflater();
-        inflater.inflate(R.menu.desconectar_menu, menu);
-        return true;
-    }
-
-    @Override
-    public boolean onOptionsItemSelected(MenuItem item) {
-        // Handle item selection
-        switch (item.getItemId()) {
-            case R.id.desconectar_btn:
-                jugadorActivo.setConectado(false);
-                userRef.setValue(jugadorActivo);
-                auth.signOut();
-
-                Intent i = new Intent(this, LoginActivity.class);
-                startActivity(i);
-                return true;
-
-            case R.id.desbloquear_btn:
-                // terminamos de dejar preparado el jugador para otro reto y actualizamos la base de datos
-                jugadorActivo.setRetadorId("*");
-                jugadorActivo.setRivalId("*");
-                jugadorActivo.setResultadoreto(0);
-                jugadorActivo.setResultadorival(0);
-                jugadorActivo.setJugando(false);
-                userRef.setValue(jugadorActivo);
-                return true;
-
-            default:
-                return super.onOptionsItemSelected(item);
-        }
-    }
 
 
     public void enviarmensaje(View vista) {
@@ -470,10 +447,11 @@ public class MainActivity extends AppCompatActivity {
     protected void onPause() {
         super.onPause();
 
-         Log.d("MENSAJE", "ON PAUSE");
+        Log.d("MENSAJE", "ON PAUSE");
 
         if (jugadorActivo != null) {
             jugadorActivo.setConectado(false);
+            jugadorActivo.setActualizado();
             userRef.setValue(jugadorActivo);
         }
 
@@ -484,12 +462,14 @@ public class MainActivity extends AppCompatActivity {
     protected void onStop() {
         super.onStop();
 
-         Log.d("MENSAJE", "ON STOP");
+        Log.d("MENSAJE", "ON STOP");
 
         if (jugadorActivo != null) {
             jugadorActivo.setConectado(false);
+            jugadorActivo.setActualizado();
             userRef.setValue(jugadorActivo);
         }
+
 
     }
 
@@ -499,16 +479,28 @@ public class MainActivity extends AppCompatActivity {
     public void onBackPressed() {
         super.onBackPressed();
 
+        if (jugadorActivo != null) {
+            jugadorActivo.setConectado(false);
+            jugadorActivo.setActualizado();
+            userRef.setValue(jugadorActivo);
+        }
+
         Log.d("MENSAJE", "BACK PRESIONADO");
+
+        this.finish();
+        System.exit(0);
+
+
 
 
     }
+
 
     public void retodialog(final Jugador rivaldlg) {
 
         final Dialog dialog = new Dialog(context);
         dialog.setContentView(R.layout.dialogo_reto);
-        dialog.setTitle("S I M");
+        dialog.setTitle(R.string.app_name);
 
         final ImageView imagenrivalIV = (ImageView) dialog.findViewById(R.id.imagenrivaldialogIV);
         final TextView nombrerivaltxt = (TextView) dialog.findViewById(R.id.nombrerivaldialogTV);
@@ -534,16 +526,39 @@ public class MainActivity extends AppCompatActivity {
                 .into(imagenrivalIV);
 
 
+        // Detectar si el usuario pulsa "Back"
+        dialog.setOnCancelListener(new DialogInterface.OnCancelListener() {
+            @Override
+            public void onCancel(DialogInterface dialogInterface) {
+                ultimoReto = "Cancelado";
+
+                jugadorActivo.setUltimoReto("Cancelado");
+                jugadorActivo.setResultadoreto(-1);
+                jugadorActivo.setActualizado();
+
+                rival.setResultadoreto(jugadorActivo.getResultadorival());
+                rival.setResultadorival(-1);
+                rival.setActualizado();
+
+                // Actualizar la base de datos
+                rivalRef = database.getReference().child(rival.getId());
+                rivalRef.setValue(rival);
+                userRef.setValue(jugadorActivo);
+
+                Log.d("MENSAJE ", "Diálogo cancelado");
+
+            }
+        });
+
         // Añadir como amigo
         amigoBTN.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
                 jugadorActivo.addAmigos(rivaldlg.getId());
-                Toast.makeText(context, "Jugador añadido como Amigo", Toast.LENGTH_SHORT).show();
+                Toast.makeText(context, R.string.amigo, Toast.LENGTH_SHORT).show();
                 userRef.setValue(jugadorActivo);
             }
         });
-
 
         // Retar usando Fuerza
         fuerzaBTN.setOnClickListener(new View.OnClickListener() {
@@ -575,6 +590,7 @@ public class MainActivity extends AppCompatActivity {
             }
         });
 
+
         // mostrar el diálogo
         dialog.show();
     }
@@ -588,7 +604,7 @@ public class MainActivity extends AppCompatActivity {
 
         final Dialog dialog_finreto = new Dialog(context);
         dialog_finreto.setContentView(R.layout.dialogo_resultado);
-        dialog_finreto.setTitle("S I M");
+        dialog_finreto.setTitle(R.string.app_name);
 
 
         final ImageView imagen_jugador_IV = (ImageView) dialog_finreto.findViewById(R.id.resultado_jugador_IV);
@@ -600,16 +616,24 @@ public class MainActivity extends AppCompatActivity {
 
         final ImageButton resultado_OK_BTN = (ImageButton) dialog_finreto.findViewById(R.id.resultado_OK_BTN);
 
+
+
+
         if (jugadorActivo.getResultadoreto() < jugadorActivo.getResultadorival()) {
-            nombre_jugador_resultado_TV.setText(jugadorActivo.getNombre() + " Has Perdido usando " + ultimoReto);
-            jugadorActivo.setDerrotas(jugadorActivo.getVictorias() + 1);
+
+            String cadena = R.string.perdido + "";
+            nombre_jugador_resultado_TV.setText(jugadorActivo.getNombre().concat(" has ".concat((cadena).concat(" usando ".concat(ultimoReto)))));
+
+            jugadorActivo.setDerrotas(jugadorActivo.getDerrotas() + 1);
             jugadorActivo.setResultadoreto(-1);
         } else if (jugadorActivo.getResultadoreto() > jugadorActivo.getResultadorival()) {
-            nombre_jugador_resultado_TV.setText(jugadorActivo.getNombre() + " Has Ganado usando " + ultimoReto);
+            String cadena = R.string.ganado + "";
+            nombre_jugador_resultado_TV.setText(jugadorActivo.getNombre().concat(" has ".concat((cadena).concat(" usando ".concat(ultimoReto)))));
             jugadorActivo.setVictorias(jugadorActivo.getVictorias() + 1);
             jugadorActivo.setResultadoreto(1);
         } else {
-            nombre_jugador_resultado_TV.setText(jugadorActivo.getNombre() + " Empate");
+
+            nombre_jugador_resultado_TV.setText(jugadorActivo.getNombre().concat(String.valueOf(R.string.empate)));
             jugadorActivo.setResultadoreto(1);
         }
 
@@ -631,14 +655,14 @@ public class MainActivity extends AppCompatActivity {
                 // si cancelas siempre pierdes
                 jugadorActivo.setFuerza(jugadorActivo.getFuerza() - 1);
                 jugadorActivo.setInteligencia(jugadorActivo.getInteligencia() - 1);
-                jugadorActivo.setMagia(jugadorActivo.getMagia() -1);
+                jugadorActivo.setMagia(jugadorActivo.getMagia() - 1);
                 break;
         }
 
         // evitar negativos
         if (jugadorActivo.getFuerza() < 0) jugadorActivo.setFuerza(0);
-        if (jugadorActivo.getInteligencia() < 0 ) jugadorActivo.setInteligencia(0);
-        if (jugadorActivo.getMagia() < 0 ) jugadorActivo.setMagia(0);
+        if (jugadorActivo.getInteligencia() < 0) jugadorActivo.setInteligencia(0);
+        if (jugadorActivo.getMagia() < 0) jugadorActivo.setMagia(0);
 
 
         // mostrar el resultado en el diálogo
@@ -663,8 +687,9 @@ public class MainActivity extends AppCompatActivity {
         fuerzaTV.setText(jugadorActivo.getFuerza() + "");
         inteligenciaTV.setText(jugadorActivo.getInteligencia() + "");
         magiaTV.setText(jugadorActivo.getMagia() + "");
-        victoriasTV.setText("Victorias : " + jugadorActivo.getVictorias());
-        derrotasTV.setText("Derrotas : " + jugadorActivo.getDerrotas());
+        victoriasTV.setText(jugadorActivo.getVictorias() + "");
+        derrotasTV.setText(jugadorActivo.getDerrotas() + "");
+
 
 
         resultado_OK_BTN.setOnClickListener(new View.OnClickListener() {
@@ -689,14 +714,14 @@ public class MainActivity extends AppCompatActivity {
     }
 
 
-    public void buscarJugador(View v){
+    public void buscarJugador(View v) {
         filtrar = 5;
         jugadorActivo.setActualizado();
         userRef.setValue(jugadorActivo);
     }
 
 
-    public void personalizarImg(View v){
+    public void personalizarImg(View v) {
         PopupMenu popup = new PopupMenu(context, v);
         //Inflating the Popup using xml file
         popup.getMenuInflater().inflate(R.menu.menu_foto, popup.getMenu());
@@ -704,7 +729,7 @@ public class MainActivity extends AppCompatActivity {
         //registering popup with OnMenuItemClickListener
         popup.setOnMenuItemClickListener(new PopupMenu.OnMenuItemClickListener() {
             public boolean onMenuItemClick(MenuItem item) {
-                switch (item.getItemId()){
+                switch (item.getItemId()) {
                     case R.id.foto_camara:
 
                         //call it to open the camera
@@ -712,15 +737,14 @@ public class MainActivity extends AppCompatActivity {
                         try {
                             in = cameraPhoto.takePhotoIntent();
                         } catch (IOException e) {
-                            Log.e("CAMARA" , e.getMessage());
+                            Log.e("CAMARA", e.getMessage());
                         }
 
 
-                        if (in!=null) {
+                        if (in != null) {
                             startActivityForResult(in, CAMERA_REQUEST);
                             cameraPhoto.addToGallery();
                         }
-
 
 
                         break;
@@ -741,7 +765,6 @@ public class MainActivity extends AppCompatActivity {
     }
 
 
-
     private boolean checkPermission() {
 
         boolean permiso = false;
@@ -755,9 +778,9 @@ public class MainActivity extends AppCompatActivity {
             int hasCameraContactsPermission = checkSelfPermission(android.Manifest.permission.CAMERA);
             int hasWritePermission = checkSelfPermission(android.Manifest.permission.WRITE_EXTERNAL_STORAGE);
 
-            if(hasWritePermission != PackageManager.PERMISSION_GRANTED){
+            if (hasWritePermission != PackageManager.PERMISSION_GRANTED) {
 
-                requestPermissions(new String[] {android.Manifest.permission.WRITE_EXTERNAL_STORAGE}, GALLERY_REQUEST);
+                requestPermissions(new String[]{android.Manifest.permission.WRITE_EXTERNAL_STORAGE}, GALLERY_REQUEST);
                 permiso = true;
 
             }
@@ -765,15 +788,15 @@ public class MainActivity extends AppCompatActivity {
 
             if (hasCameraContactsPermission != PackageManager.PERMISSION_GRANTED) {
 
-                requestPermissions(new String[] {android.Manifest.permission.CAMERA},
+                requestPermissions(new String[]{android.Manifest.permission.CAMERA},
                         CAMERA_REQUEST);
 
-               // Toast.makeText(this, "Solicitando permisos", Toast.LENGTH_LONG).show();
+                // Toast.makeText(this, "Solicitando permisos", Toast.LENGTH_LONG).show();
                 permiso = true;
 
-            }else if (hasCameraContactsPermission == PackageManager.PERMISSION_GRANTED){
+            } else if (hasCameraContactsPermission == PackageManager.PERMISSION_GRANTED) {
 
-             //   Toast.makeText(this, "Los Permisos ya estaban concedidos ", Toast.LENGTH_LONG).show();
+                //   Toast.makeText(this, "Los Permisos ya estaban concedidos ", Toast.LENGTH_LONG).show();
                 permiso = true;
 
             }
@@ -801,8 +824,9 @@ public class MainActivity extends AppCompatActivity {
     @Override
     protected void onRestoreInstanceState(Bundle savedInstanceState) {
         super.onRestoreInstanceState(savedInstanceState);
-    }
 
+        Log.d("MENSAJE", "RESTAURADO ESTADO");
+    }
 
 
     @Override
@@ -812,141 +836,141 @@ public class MainActivity extends AppCompatActivity {
         // cuando en nuestro jugador están los resultados de nuestro reto y del rival, mostrará el diálogo fin de reto
         // supone que los 2 jugadores han terminado su reto (Se detecta en el listener de la base de datos)
 
-            if (requestCode == 1 || requestCode == 2 || requestCode == 3) {
-                Toast.makeText(context, "Fin. Cuando el rival termine, aparecerá el resultado ...", Toast.LENGTH_LONG).show();
-                if (resultCode == Activity.RESULT_OK) {
-                    long puntos = data.getLongExtra("Resultado", -1);
-                    String tipo = data.getStringExtra("Juego");
+        if (requestCode == 1 || requestCode == 2 || requestCode == 3) {
+            Toast.makeText(context, R.string.fin, Toast.LENGTH_LONG).show();
+            if (resultCode == Activity.RESULT_OK) {
+                long puntos = data.getLongExtra("Resultado", -1);
+                String tipo = data.getStringExtra("Juego");
 
-                    ultimoReto = tipo;
+                ultimoReto = tipo;
 
-                    jugadorActivo.setUltimoReto(tipo);
-                    jugadorActivo.setResultadoreto((int) puntos);
+                jugadorActivo.setUltimoReto(tipo);
+                jugadorActivo.setResultadoreto((int) puntos);
+                jugadorActivo.setJugando(true);
 
-                    rival.setResultadoreto(jugadorActivo.getResultadorival());
-                    rival.setResultadorival((int) puntos);
+                rival.setResultadoreto(jugadorActivo.getResultadorival());
+                rival.setResultadorival((int) puntos);
 
-                    // Actualizar la base de datos
-                    rivalRef = database.getReference().child(rival.getId());
-                    rivalRef.setValue(rival);
-                    userRef.setValue(jugadorActivo);
+                // Actualizar la base de datos
+                rivalRef = database.getReference().child(rival.getId());
+                rivalRef.setValue(rival);
+                userRef.setValue(jugadorActivo);
 
-                    Log.d("RESULTADO ", tipo + ": " + puntos + "");
-
-                }
-                if (resultCode == Activity.RESULT_CANCELED) {
-
-
-                    jugadorActivo.setUltimoReto("Cancelado");
-                    jugadorActivo.setResultadoreto(-1);
-
-                    rival.setResultadoreto(jugadorActivo.getResultadorival());
-                    rival.setResultadorival(-1);
-
-                    // Actualizar la base de datos
-                    rivalRef = database.getReference().child(rival.getId());
-                    rivalRef.setValue(rival);
-                    userRef.setValue(jugadorActivo);
-
-                    Log.d("RESULTADO", "CANCELADO");
-                }
-
-
-                fuerzaTV.setText(jugadorActivo.getFuerza() + "");
-                inteligenciaTV.setText(jugadorActivo.getInteligencia() + "");
-                magiaTV.setText(jugadorActivo.getMagia() + "");
+                Log.d("RESULTADO ", tipo + ": " + puntos + "");
 
             }
+            if (resultCode == Activity.RESULT_CANCELED) {
 
 
-            // Personalizar Imágen del usuario
+                jugadorActivo.setUltimoReto("Cancelado");
+                jugadorActivo.setResultadoreto(-1);
 
-            if (resultCode == RESULT_OK) {
-                if (requestCode == CAMERA_REQUEST) {
-                    String photoPath = cameraPhoto.getPhotoPath();
-                    // guardamos en la base de datos la ruta a la foto
-                    // cochedetalle.setmImageUri(photoPath);
-                    //  cocheReference.setValue(cochedetalle);
+                rival.setResultadoreto(jugadorActivo.getResultadorival());
+                rival.setResultadorival(-1);
 
-                    try {
-                        Bitmap bitmap = ImageLoader.init().from(photoPath).requestSize(128, 128).getBitmap();
-                        Log.d("IMAGEN", "Camara");
-                        subirImagen(bitmap);
-                        imagenJugador.setImageBitmap(bitmap); //imageView is your ImageView
+                // Actualizar la base de datos
+                rivalRef = database.getReference().child(rival.getId());
+                rivalRef.setValue(rival);
+                userRef.setValue(jugadorActivo);
 
-                    } catch (FileNotFoundException e) {
-                        e.printStackTrace();
-                    }
+                Log.d("RESULTADO", "CANCELADO");
+            }
+
+            fuerzaTV.setText(jugadorActivo.getFuerza() + "");
+            inteligenciaTV.setText(jugadorActivo.getInteligencia() + "");
+            magiaTV.setText(jugadorActivo.getMagia() + "");
+
+        }
+
+
+        // Personalizar Imágen del usuario
+
+        if (resultCode == RESULT_OK) {
+            if (requestCode == CAMERA_REQUEST) {
+                String photoPath = cameraPhoto.getPhotoPath();
+                // guardamos en la base de datos la ruta a la foto
+                // cochedetalle.setmImageUri(photoPath);
+                //  cocheReference.setValue(cochedetalle);
+
+                try {
+                    Bitmap bitmap = ImageLoader.init().from(photoPath).requestSize(128, 128).getBitmap();
+                    Log.d("IMAGEN", "Camara");
+                    subirImagen(bitmap);
+                    imagenJugador.setImageBitmap(bitmap); //imageView is your ImageView
+
+                } catch (FileNotFoundException e) {
+                    e.printStackTrace();
                 }
+            }
 
-                if (requestCode == GALLERY_REQUEST) {
-                    galleryPhoto.setPhotoUri(data.getData());
-                    String photoPath = galleryPhoto.getPath();
-                    try {
-                        Bitmap bitmap = ImageLoader.init().from(photoPath).requestSize(128, 128).getBitmap();
-                        Log.d("IMAGEN", "Galeria");
-                        subirImagen(bitmap);
-                        imagenJugador.setImageBitmap(bitmap);
+            if (requestCode == GALLERY_REQUEST) {
+                galleryPhoto.setPhotoUri(data.getData());
+                String photoPath = galleryPhoto.getPath();
+                try {
+                    Bitmap bitmap = ImageLoader.init().from(photoPath).requestSize(128, 128).getBitmap();
+                    Log.d("IMAGEN", "Galeria");
+                    subirImagen(bitmap);
+                    imagenJugador.setImageBitmap(bitmap);
 
-                    } catch (FileNotFoundException e) {
-                        e.printStackTrace();
-                    }
+                } catch (FileNotFoundException e) {
+                    e.printStackTrace();
                 }
-
             }
 
         }
 
+    }
 
-        public void subirImagen(Bitmap bitmap){
 
-            // Borrar el archivo si existe
-            // Delete the file
-            storageRef.child(user.getUid()).delete().addOnSuccessListener(new OnSuccessListener() {
-                @Override
-                public void onSuccess(Object o) {
-                    // File deleted successfully
-                }
+    public void subirImagen(Bitmap bitmap) {
 
-            }).addOnFailureListener(new OnFailureListener() {
-                @Override
-                public void onFailure(@NonNull Exception exception) {
-                    // Uh-oh, an error occurred!
-                }
-            });
+        // Borrar el archivo si existe
+        // Delete the file
+        storageRef.child(user.getUid()).delete().addOnSuccessListener(new OnSuccessListener() {
+            @Override
+            public void onSuccess(Object o) {
+                // File deleted successfully
+            }
 
-            // Get the data from an ImageView as bytes
-            // imageView.setDrawingCacheEnabled(true);
-            //imageView.buildDrawingCache();
-            //Bitmap bitmap = imageView.getDrawingCache();
-            ByteArrayOutputStream baos = new ByteArrayOutputStream();
-            bitmap.compress(Bitmap.CompressFormat.JPEG, 100, baos);
-            byte[] data = baos.toByteArray();
+        }).addOnFailureListener(new OnFailureListener() {
+            @Override
+            public void onFailure(@NonNull Exception exception) {
+                // Uh-oh, an error occurred!
+            }
+        });
 
-            UploadTask uploadTask = storageRef.child(user.getUid()).putBytes(data);
-            uploadTask.addOnFailureListener(new OnFailureListener() {
-                @Override
-                public void onFailure(@NonNull Exception exception) {
-                    // Handle unsuccessful uploads
-                }
-            }).addOnSuccessListener(new OnSuccessListener<UploadTask.TaskSnapshot>() {
-                @Override
-                public void onSuccess(UploadTask.TaskSnapshot taskSnapshot) {
-                    // taskSnapshot.getMetadata() contains file metadata such as size, content-type, and download URL.
-                    //Uri downloadUrl = taskSnapshot.getDownloadUrl();
-                }
-            });
-        }
+        // Get the data from an ImageView as bytes
+        // imageView.setDrawingCacheEnabled(true);
+        //imageView.buildDrawingCache();
+        //Bitmap bitmap = imageView.getDrawingCache();
+        ByteArrayOutputStream baos = new ByteArrayOutputStream();
+        bitmap.compress(Bitmap.CompressFormat.JPEG, 100, baos);
+        byte[] data = baos.toByteArray();
 
-        public void descargarImagen(){
+        UploadTask uploadTask = storageRef.child(user.getUid()).putBytes(data);
+        uploadTask.addOnFailureListener(new OnFailureListener() {
+            @Override
+            public void onFailure(@NonNull Exception exception) {
+                // Handle unsuccessful uploads
+            }
+        }).addOnSuccessListener(new OnSuccessListener<UploadTask.TaskSnapshot>() {
+            @Override
+            public void onSuccess(UploadTask.TaskSnapshot taskSnapshot) {
+                // taskSnapshot.getMetadata() contains file metadata such as size, content-type, and download URL.
+                //Uri downloadUrl = taskSnapshot.getDownloadUrl();
+            }
+        });
+    }
 
-            Glide.with(context)
-                    .using(new FirebaseImageLoader())
-                    .load(storageRef.child(user.getUid()))
-                    .diskCacheStrategy(DiskCacheStrategy.NONE)
-                    .into(imagenJugador);
+    public void descargarImagen() {
 
-        }
+        Glide.with(context)
+                .using(new FirebaseImageLoader())
+                .load(storageRef.child(user.getUid()))
+                .diskCacheStrategy(DiskCacheStrategy.NONE)
+                .into(imagenJugador);
+
+    }
 
 
     // Servicio para las notificaciones
@@ -958,5 +982,44 @@ public class MainActivity extends AppCompatActivity {
         startService(intentServicioNotificacion);
     }
 
+
+    public void menuOpciones (View v){
+        PopupMenu popup = new PopupMenu(context, v);
+        //Inflating the Popup using xml file
+        popup.getMenuInflater().inflate(R.menu.desconectar_menu, popup.getMenu());
+
+        //registering popup with OnMenuItemClickListener
+        popup.setOnMenuItemClickListener(new PopupMenu.OnMenuItemClickListener() {
+            public boolean onMenuItemClick(MenuItem item) {
+                switch (item.getItemId()) {
+                    case R.id.desconectar_btn:
+                        jugadorActivo.setConectado(false);
+                        userRef.setValue(jugadorActivo);
+
+                        Intent i = new Intent(context, LoginActivity.class);
+                        startActivity(i);
+                        return true;
+
+                    case R.id.desbloquear_btn:
+                        // terminamos de dejar preparado el jugador para otro reto y actualizamos la base de datos
+                        jugadorActivo.setRetadorId("*");
+                        jugadorActivo.setRivalId("*");
+                        jugadorActivo.setResultadoreto(0);
+                        jugadorActivo.setResultadorival(0);
+                        jugadorActivo.setJugando(false);
+                        userRef.setValue(jugadorActivo);
+                        return true;
+
+
+                }
+
+
+                return true;
+            }
+        });
+
+        popup.show();//showing popup menu
+
+    }
 
 }

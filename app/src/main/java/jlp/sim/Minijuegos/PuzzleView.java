@@ -389,7 +389,7 @@ public class PuzzleView extends SurfaceView {
         puzzleLoopThread.setRunning(false);
         puzzleLoopThread.interrupt();
 
-        long resultado = 60000 - (crono - System.currentTimeMillis());
+        long resultado = crono - System.currentTimeMillis();
 
         Intent returnIntent = new Intent();
         returnIntent.putExtra("Resultado", resultado);
