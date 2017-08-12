@@ -8,6 +8,7 @@ import android.graphics.BitmapFactory;
 import android.graphics.Canvas;
 import android.graphics.Color;
 import android.graphics.Paint;
+import android.graphics.drawable.Drawable;
 import android.util.Log;
 import android.view.MotionEvent;
 import android.view.SurfaceHolder;
@@ -79,11 +80,55 @@ public class PuzzleView extends SurfaceView {
 
     private void createSprites() {
 
+        Random aleatorio = new Random();
+        int imagen = 0;
+        int numero_imagenes = 11;
+
+        switch (aleatorio.nextInt(numero_imagenes)){
+            case 0:
+                imagen = R.drawable.puzzle2;
+                break;
+            case 1:
+                imagen = R.drawable.arbol;
+                break;
+            case 2:
+                imagen = R.drawable.caballero;
+                break;
+            case 3:
+                imagen = R.drawable.castillo;
+                break;
+            case 4:
+                imagen = R.drawable.cheops;
+                break;
+            case 5:
+                imagen = R.drawable.dragon;
+                break;
+            case 6:
+                imagen = R.drawable.leon;
+                break;
+            case 7:
+                imagen = R.drawable.nazca;
+                break;
+            case 8:
+                imagen = R.drawable.reloj;
+                break;
+            case 9:
+                imagen = R.drawable.stonehenge;
+                break;
+            case 10:
+                imagen = R.drawable.yellowstone;
+                break;
+            case 11:
+                imagen = R.drawable.puzzle3;
+                break;
+
+        }
+
         int cnd = 0;
 
         for (int m = 0; m < alto; m++) {
             for (int n = 0; n < ancho; n++) {
-                puzzleSprites.add(createSprite(R.drawable.puzzle2, n, m, ancho));
+                puzzleSprites.add(createSprite(imagen, n, m, ancho));
                 puzzleSprites.get(cnd).setId(cnd);
                 cnd++;
             }
@@ -177,35 +222,7 @@ public class PuzzleView extends SurfaceView {
 
         }
 
-       /*
-        String[] posiciones = new String[ancho * alto];
 
-        int cnd = 0;
-        for (int m = 0; m < alto; m++) {
-            for (int n = 0; n < ancho; n++) {
-                posiciones[cnd] = "" + m + n;
-                cnd++;
-            }
-        }
-        Random aleat = new Random();
-
-        do {
-            int p = aleat.nextInt(ancho * alto);
-            if (!posiciones[p].equals("##")) {
-                int aleatn = Integer.parseInt(posiciones[p].charAt(0) + "");
-                int aleatm = Integer.parseInt(posiciones[p].charAt(1) + "");
-                puzzle[aleatn][aleatm] = cnd;
-
-                PuzzleSprite tmp = puzzleSprites.get(cnd - 1);
-                tmp.setX(aleatn);
-                tmp.setY(aleatm);
-                if (cnd == 8) tmp.setVisible(false);
-
-                posiciones[p] = "##";
-                cnd--;
-            }
-        } while (cnd > 0);
-*/
         Log.d("SALIDA", "Fin desordenar puzzle");
 
     }

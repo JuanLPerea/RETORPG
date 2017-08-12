@@ -61,6 +61,7 @@ import java.util.List;
 
 import jlp.sim.Adapters.ItemClickSupport;
 import jlp.sim.Adapters.PlayersAdapter;
+import jlp.sim.Modelos.ComparadorActualizado;
 import jlp.sim.Modelos.ComparadorTop;
 import jlp.sim.Modelos.Jugador;
 import jlp.sim.Modelos.ServicioNotificacion;
@@ -109,7 +110,6 @@ public class MainActivity extends AppCompatActivity {
     // Para la foto
     CameraPhoto cameraPhoto;
     final int CAMERA_REQUEST = 1100;
-    Drawable fotodrawable;
     GalleryPhoto galleryPhoto;
     final int GALLERY_REQUEST = 2200;
 
@@ -253,19 +253,22 @@ public class MainActivity extends AppCompatActivity {
                 }
 
 
-                // Si queremos ver los mejores
+
+                Log.d("FILTRAR", filtrar + "");
+
+
                 if (filtrar == 1) {
+                    // Si queremos ver los mejores
                     Collections.sort(players, new ComparadorTop());
                 } else {
                     // ordenar lista por el campo "Actualizado"
-                    Collections.sort(players);
+                    Collections.sort(players, new ComparadorActualizado());
                 }
 
                 // si hay mas de 100 registros eliminar hasta que haya 100
                 while (players.size() > 100) {
                     players.remove(players.size() - 1);
                 }
-
 
                 // Actualizar el Recycler View
                 playersAdapter.notifyDataSetChanged();
@@ -333,7 +336,7 @@ public class MainActivity extends AppCompatActivity {
                 // Si tocamos a un jugador que no está conectado le mandamos una notificación
                 if (!rival.isConectado()) {
                     Toast.makeText(context, R.string.mensaje, Toast.LENGTH_LONG).show();
-                    rival.setNotificacion(R.string.retado + jugadorActivo.getNombre() + R.string.conectate);
+                    rival.setNotificacion(getString(R.string.retado) + jugadorActivo.getNombre() + getString(R.string.conecta) + R.string.app_name);
                     rivalRef.setValue(rival);
                 }
 
@@ -453,6 +456,31 @@ public class MainActivity extends AppCompatActivity {
             jugadorActivo.setConectado(false);
             jugadorActivo.setActualizado();
             userRef.setValue(jugadorActivo);
+
+            /*
+            // si estás jugando y sales de la aplicacion cuenta como que abandonas y
+            // resta puntos
+            if(jugadorActivo.isJugando()){
+                Log.d("MENSAJE", "CANCELAR JUEGO");
+                ultimoReto = "Cancelado";
+
+                jugadorActivo.setUltimoReto("Cancelado");
+                jugadorActivo.setResultadoreto(-1);
+                jugadorActivo.setActualizado();
+                jugadorActivo.setJugando(false);
+
+                rival.setResultadoreto(jugadorActivo.getResultadorival());
+                rival.setResultadorival(-1);
+                rival.setActualizado();
+
+                // Actualizar la base de datos
+                rivalRef = database.getReference().child(rival.getId());
+                rivalRef.setValue(rival);
+                userRef.setValue(jugadorActivo);
+
+            }
+
+            */
         }
 
 
@@ -468,7 +496,11 @@ public class MainActivity extends AppCompatActivity {
             jugadorActivo.setConectado(false);
             jugadorActivo.setActualizado();
             userRef.setValue(jugadorActivo);
+
+
         }
+
+
 
 
     }
@@ -616,24 +648,21 @@ public class MainActivity extends AppCompatActivity {
 
         final ImageButton resultado_OK_BTN = (ImageButton) dialog_finreto.findViewById(R.id.resultado_OK_BTN);
 
-
-
-
         if (jugadorActivo.getResultadoreto() < jugadorActivo.getResultadorival()) {
 
-            String cadena = R.string.perdido + "";
+            String cadena =  getString(R.string.perdido);
             nombre_jugador_resultado_TV.setText(jugadorActivo.getNombre().concat(" has ".concat((cadena).concat(" usando ".concat(ultimoReto)))));
 
             jugadorActivo.setDerrotas(jugadorActivo.getDerrotas() + 1);
             jugadorActivo.setResultadoreto(-1);
         } else if (jugadorActivo.getResultadoreto() > jugadorActivo.getResultadorival()) {
-            String cadena = R.string.ganado + "";
+            String cadena = getString(R.string.ganar);
             nombre_jugador_resultado_TV.setText(jugadorActivo.getNombre().concat(" has ".concat((cadena).concat(" usando ".concat(ultimoReto)))));
             jugadorActivo.setVictorias(jugadorActivo.getVictorias() + 1);
             jugadorActivo.setResultadoreto(1);
         } else {
 
-            nombre_jugador_resultado_TV.setText(jugadorActivo.getNombre().concat(String.valueOf(R.string.empate)));
+            nombre_jugador_resultado_TV.setText(jugadorActivo.getNombre().concat(String.valueOf(getString(R.string.empate))));
             jugadorActivo.setResultadoreto(1);
         }
 
@@ -691,6 +720,20 @@ public class MainActivity extends AppCompatActivity {
         derrotasTV.setText(jugadorActivo.getDerrotas() + "");
 
 
+        dialog_finreto.setOnCancelListener(new DialogInterface.OnCancelListener() {
+            @Override
+            public void onCancel(DialogInterface dialogInterface) {
+                // terminamos de dejar preparado el jugador para otro reto y actualizamos la base de datos
+                jugadorActivo.setUltimoReto(ultimoReto);
+                jugadorActivo.setRetadorId("*");
+                jugadorActivo.setRivalId("*");
+                jugadorActivo.setResultadoreto(0);
+                jugadorActivo.setResultadorival(0);
+                jugadorActivo.setJugando(false);
+                userRef.setValue(jugadorActivo);
+                dialog_finreto.dismiss();
+            }
+        });
 
         resultado_OK_BTN.setOnClickListener(new View.OnClickListener() {
             @Override

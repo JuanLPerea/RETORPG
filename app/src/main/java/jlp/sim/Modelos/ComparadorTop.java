@@ -1,5 +1,8 @@
 package jlp.sim.Modelos;
 
+import android.support.annotation.NonNull;
+import android.util.Log;
+
 import java.util.Comparator;
 
 /**
@@ -8,14 +11,16 @@ import java.util.Comparator;
 
 public class ComparadorTop implements Comparator<Jugador> {
 
+
     @Override
     public int compare(Jugador jugador1, Jugador jugador2) {
 
-        int sumapuntosJ1 = jugador1.getFuerza() + jugador1.getInteligencia() + jugador1.getMagia();
-        int sumapuntosJ2 = jugador2.getFuerza() + jugador2.getInteligencia() + jugador2.getMagia();
 
-        int compare = (sumapuntosJ1 > sumapuntosJ2) ? 1 : 0;
 
-        return compare;
+        int resultado = (jugador2.getVictorias() > jugador1.getVictorias()) ? 1 :-1;
+
+        Log.d("ORDENAR", jugador1.getVictorias() + " " + jugador2.getVictorias() + " " + resultado + "");
+
+        return resultado;
     }
 }

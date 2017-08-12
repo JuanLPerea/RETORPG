@@ -15,7 +15,7 @@ import jlp.sim.LoginActivity;
  * Created by aerocool on 24/06/17.
  */
 
-public class Jugador implements Comparable<Jugador> {
+public class Jugador  {
 
     private String id;
     private String nombre;
@@ -37,6 +37,7 @@ public class Jugador implements Comparable<Jugador> {
     private String retadorId;
     private String rivalId;
     private String ultimoReto;
+    private String ultimoRetoRival;
     private String notificacion;
 
 
@@ -211,19 +212,6 @@ public class Jugador implements Comparable<Jugador> {
     }
 
 
-    public int compareTo(Jugador compararJugador) {
-
-        String compararactualizado = ((Jugador) compararJugador).getActualizado();
-
-        String jugadoractualizado = this.getActualizado();
-
-
-        // Log.d("COMPARAR", "" + compararactualizado.compareTo(jugadoractualizado));
-        // Orden ascendente
-        return compararactualizado.compareTo(jugadoractualizado);
-    }
-
-
     public String getRetadorId() {
         return retadorId;
     }
@@ -262,5 +250,13 @@ public class Jugador implements Comparable<Jugador> {
 
     public void setNotificacion(String notificacion) {
         this.notificacion = notificacion;
+    }
+
+    public String getUltimoRetoRival() {
+        return ultimoRetoRival;
+    }
+
+    public void setUltimoRetoRival(String ultimoRetoRival) {
+        this.ultimoRetoRival = ultimoRetoRival;
     }
 }

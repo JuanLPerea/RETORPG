@@ -40,7 +40,7 @@ public class MagiaView extends SurfaceView {
     Activity miActividad;
     int animacion = 0;
     int veloanim = 0;
-    int num_objetos = 8;
+    int num_objetos = 23;
     String pocion = "";
 
 
@@ -157,6 +157,44 @@ public class MagiaView extends SurfaceView {
                 case 11:
                     magiaSprites.add(createSprite(R.drawable.veneno, 11, nmr));
                     break;
+                case 12:
+                    magiaSprites.add(createSprite(R.drawable.amuleto, -3, nmr));
+                    break;
+                case 13:
+                    magiaSprites.add(createSprite(R.drawable.calavera, 15, nmr));
+                    break;
+                case 14:
+                    magiaSprites.add(createSprite(R.drawable.diamante, -5, nmr));
+                    break;
+                case 15:
+                    magiaSprites.add(createSprite(R.drawable.dinamita, 6, nmr));
+                    break;
+                case 16:
+                    magiaSprites.add(createSprite(R.drawable.filete, -3, nmr));
+                    break;
+                case 17:
+                    magiaSprites.add(createSprite(R.drawable.hiedra, 9, nmr));
+                    break;
+                case 18:
+                    magiaSprites.add(createSprite(R.drawable.hoja, -4, nmr));
+                    break;
+                case 19:
+                    magiaSprites.add(createSprite(R.drawable.manzana, -5, nmr));
+                    break;
+                case 20:
+                    magiaSprites.add(createSprite(R.drawable.murcielago, 17, nmr));
+                    break;
+                case 21:
+                    magiaSprites.add(createSprite(R.drawable.pluma, 8, nmr));
+                    break;
+                case 22:
+                    magiaSprites.add(createSprite(R.drawable.raspa, 10, nmr));
+                    break;
+                case 23:
+                    magiaSprites.add(createSprite(R.drawable.vudu, 20, nmr));
+                    break;
+
+
             }
             objetos_desordenados.remove(seleccion);
         }
